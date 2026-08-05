@@ -165,11 +165,11 @@
   .med-row {
     display: flex;
     align-items: center;
-    gap: clamp(14px, 2vw, 22px);
+    gap: clamp(12px, 1.6vw, 18px);
     background: white;
     border: 2px solid var(--paper-shadow);
-    border-radius: 18px;
-    padding: clamp(14px, 2vh, 20px) clamp(16px, 2.4vw, 26px);
+    border-radius: 16px;
+    padding: clamp(8px, 1.1vh, 12px) clamp(12px, 1.8vw, 18px);
     transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
   }
   .med-row.taken { background: var(--sage-bg); border-color: var(--sage); }
@@ -177,21 +177,21 @@
   .med-time {
     font-family: 'Fraunces', serif;
     font-weight: 700;
-    font-size: clamp(1.4rem, 2.6vw, 2.1rem);
+    font-size: clamp(1.1rem, 2vw, 1.6rem);
     color: var(--ink);
-    min-width: clamp(80px, 10vw, 130px);
+    min-width: clamp(70px, 9vw, 110px);
   }
 
   .med-info { flex: 1; }
   .med-name {
-    font-size: clamp(1.15rem, 2.2vw, 1.7rem);
+    font-size: clamp(0.95rem, 1.7vw, 1.3rem);
     font-weight: 700;
     color: var(--ink);
   }
   .med-dose {
-    font-size: clamp(0.95rem, 1.7vw, 1.25rem);
+    font-size: clamp(0.8rem, 1.3vw, 1rem);
     color: var(--ink-soft);
-    margin-top: 2px;
+    margin-top: 1px;
   }
 
   .badge {
@@ -209,8 +209,8 @@
 
   .check-btn {
     flex-shrink: 0;
-    width: clamp(46px, 6vw, 64px);
-    height: clamp(46px, 6vw, 64px);
+    width: clamp(36px, 4.5vw, 48px);
+    height: clamp(36px, 4.5vw, 48px);
     border-radius: 50%;
     border: 3px solid var(--paper-shadow);
     background: white;
@@ -233,6 +233,29 @@
     color: var(--ink-soft);
     font-size: clamp(1rem, 1.8vw, 1.3rem);
     padding: 10px 4px 20px;
+  }
+
+  .aviso-especial {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 1.8vw, 18px);
+    padding: clamp(12px, 1.8vh, 18px) clamp(16px, 2.4vw, 26px);
+    border-radius: 16px;
+    margin: clamp(10px, 1.6vh, 16px) 0;
+    font-weight: 700;
+  }
+  .aviso-especial .icono { font-size: clamp(1.6rem, 3vw, 2.3rem); flex-shrink: 0; }
+  .aviso-especial .texto { font-size: clamp(1.1rem, 2.1vw, 1.6rem); }
+  .aviso-especial .texto small { display: block; font-weight: 500; font-size: 0.7em; margin-top: 2px; }
+
+  .aviso-especial.si-toca {
+    background: var(--brick);
+    color: white;
+  }
+  .aviso-especial.no-toca {
+    background: var(--sage-bg);
+    border: 2px solid var(--sage);
+    color: var(--ink);
   }
 </style>
 </head>
@@ -258,6 +281,8 @@
     <div class="week-strip" id="weekStrip"></div>
 
     <main>
+      <div id="avisoEspecial"></div>
+
       <div class="section-label">Hoy toca</div>
       <div class="med-list" id="listHoy"></div>
 
@@ -291,7 +316,7 @@ const MEDICAMENTOS = [
   { nombre: "Ácido fólico",  dosis: "1 tableta",     hora: "09:00", frecuencia: "semanal", dias: [0,1,2,4,5,6] }, // todos excepto miércoles
   { nombre: "Carvedilol",    dosis: "1/2 tableta",   hora: "09:00", frecuencia: "diario" },
   { nombre: "Prednisolona",  dosis: "8 tabletas",    hora: "09:00", frecuencia: "diario" },
-  { nombre: "Metotrexato",   dosis: "6 tabletas",    hora: "10:00", frecuencia: "semanal", dias: [3] },        // solo miércoles
+  { nombre: "Metotrexato",   dosis: "6 tabletas",    hora: "10:00", frecuencia: "semanal", dias: [3], especial: true },        // solo miércoles
   { nombre: "Colestiramina", dosis: "1 sobre",       hora: "10:00", frecuencia: "diario" },
   { nombre: "Hierro",        dosis: "2 tabletas",    hora: "14:00", frecuencia: "diario" },
   { nombre: "Loperamida",    dosis: "2 tabletas",    hora: "14:00", frecuencia: "diario" },
@@ -384,6 +409,19 @@ function render() {
   }
 
   // Listas de medicamentos
+  // Aviso especial para medicamentos marcados como "especial: true"
+  const avisoEspecial = document.getElementById("avisoEspecial");
+  avisoEspecial.innerHTML = "";
+  MEDICAMENTOS.filter(med => med.especial).forEach(med => {
+    const esHoyEspecial = medAplicaHoy(med, ahora);
+    const banner = document.createElement("div");
+    banner.className = "aviso-especial " + (esHoyEspecial ? "si-toca" : "no-toca");
+    banner.innerHTML = esHoyEspecial
+      ? `<span class="icono">⚠️</span><span class="texto">Hoy SÍ toca ${med.nombre}<small>${med.dosis} · ${formatoHora12(med.hora)}</small></span>`
+      : `<span class="icono">✅</span><span class="texto">Hoy NO toca ${med.nombre}<small>Es de uso semanal, revisa la lista de abajo</small></span>`;
+    avisoEspecial.appendChild(banner);
+  });
+
   const listHoy = document.getElementById("listHoy");
   const listNoHoy = document.getElementById("listNoHoy");
   listHoy.innerHTML = "";
